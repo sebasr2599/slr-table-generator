@@ -14,5 +14,10 @@ Para compilar el programa usa los sig comandos
 cargo build --release
 cargo run --release
 ```
+## Uso
+Correr el comando e introducir un numero para los sig renglones a leer
+```shell
+cargo run --release
+```
 ## Autor
 Sebastian Resendiz
