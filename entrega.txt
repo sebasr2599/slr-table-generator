@@ -1,2 +1,2 @@
-https://github.com/sebasr2599/terminal-and-not-terminal
+https://github.com/sebasr2599/first-and-follows
 En el README.md se encuentra como instalar el programa y como correr el proyecto

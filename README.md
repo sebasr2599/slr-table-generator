@@ -1,4 +1,4 @@
-# Detectando terminales y no terminales
+# Detectando first and follows
 
 ## Descripción
 Projecto para la clase de diseño de compiladores
