@@ -1,13 +1,62 @@
-use std::collections::{BTreeSet, HashMap};
+use std::collections::{BTreeSet, HashMap, HashSet};
 fn main() {
-    let (final_term, final_not_term, productions) = get_terminal_and_not_terminal();
-    print_terminal_and_not_terminals(&final_not_term, &final_term);
+    let (final_term, _final_not_term, productions) = get_terminal_and_not_terminal();
+    let mut first_and_follows: HashMap<String, (HashSet<String>, HashSet<String>)> = HashMap::new();
+    // print_terminal_and_not_terminals(&final_not_term, &final_term);
 
     for (key, value) in &productions {
-        println!("{} produces -> {:?}", key, value);
+        // println!("{} produces -> {:?}", key, value);
+        first(
+            &key,
+            &value,
+            &final_term,
+            &mut first_and_follows,
+            &productions,
+        );
+    }
+    for (key, value) in &first_and_follows {
+        print!("{} FIRST = {{", key);
+
+        for (i, item) in value.0.iter().enumerate() {
+            if i != 0 {
+                print!(", ");
+            }
+            print!("{item}");
+        }
+
+        print!("}} , FOLLOWS = {{\n");
     }
 }
-fn print_terminal_and_not_terminals(
+fn first(
+    not_term: &String,
+    productions: &Vec<String>,
+    terminals: &BTreeSet<String>,
+    output_map: &mut HashMap<String, (HashSet<String>, HashSet<String>)>,
+    productions_map: &HashMap<String, Vec<String>>,
+) -> HashSet<String> {
+    for production in productions {
+        let front = production.split(' ').collect::<Vec<&str>>()[0].to_string();
+        if terminals.contains(&front) {
+            output_map
+                .entry(not_term.clone())
+                .and_modify(|(frst, _)| {_ = frst.insert(front.clone())})
+                .or_insert((HashSet::from([front.clone()]), HashSet::new()));
+        } else {
+            let t = first(
+                &front,
+                productions_map.get(&front).unwrap(),
+                &terminals,
+                output_map,
+                &productions_map,
+            );
+            output_map
+                .entry(not_term.clone())
+                .or_insert((t.clone(), HashSet::new()));
+        }
+    }
+    output_map.get(not_term).unwrap().0.clone()
+}
+fn _print_terminal_and_not_terminals(
     final_not_term: &BTreeSet<String>,
     final_term: &BTreeSet<String>,
 ) {
@@ -53,6 +102,7 @@ fn get_terminal_and_not_terminal() -> (
         std::io::stdin()
             .read_line(&mut temp_str)
             .expect("failed to read from stdin");
+        temp_str = temp_str.replace("\' \'", "#");
         let temp: Vec<&str> = temp_str.trim().split(&[' ', '\n']).collect();
         // println!("{:?}", temp);
         // println!("{:?}", temp_str);
@@ -109,6 +159,7 @@ fn def_terminal_set() -> BTreeSet<String> {
     let mut set = BTreeSet::new();
 
     set.insert("+".to_string());
+    set.insert("#".to_string());
     set.insert("-".to_string());
     set.insert("*".to_string());
     set.insert("/".to_string());
