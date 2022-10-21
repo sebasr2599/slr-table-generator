@@ -1,6 +1,7 @@
-use std::collections::{BTreeSet, HashMap, HashSet};
+use regex::Regex;
+use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 fn main() {
-    let (final_term, _final_not_term, productions) = get_terminal_and_not_terminal();
+    let (final_term, final_not_term, productions) = get_terminal_and_not_terminal();
     let mut first_and_follows: HashMap<String, (HashSet<String>, HashSet<String>)> = HashMap::new();
     // print_terminal_and_not_terminals(&final_not_term, &final_term);
 
@@ -14,18 +15,56 @@ fn main() {
             &productions,
         );
     }
-    for (key, value) in &first_and_follows {
-        print!("{} FIRST = {{", key);
+    // if its the first follow add $
+    first_and_follows
+        .entry(final_not_term.iter().next().unwrap().clone())
+        .and_modify(|tup| {_ = tup.1.insert("$".to_string())});
+    let inverted_production_map: BTreeMap<String, String> = inverted_production_map(&productions);
 
-        for (i, item) in value.0.iter().enumerate() {
-            if i != 0 {
-                print!(", ");
-            }
-            print!("{item}");
-        }
-
-        print!("}} , FOLLOWS = {{\n");
+    for b in &final_not_term {
+        _ = follow(
+            &b,
+            &inverted_production_map,
+            &mut first_and_follows,
+            &final_not_term,
+        );
     }
+    print_first_and_follows(&first_and_follows);
+}
+
+fn follow(
+    b: &String,
+    map: &BTreeMap<String, String>,
+    first_and_follows: &HashMap<String, (HashSet<String>, HashSet<String>)>,
+    final_not_term: &BTreeSet<String>,
+) -> () {
+    let formatted = format!(r"(.*) {} (.*)", b.to_string());
+    let re_1 = Regex::new(formatted.as_str()).unwrap();
+    let formatted = format!(r"(.*) {}", b.to_string());
+    let re_2 = Regex::new(formatted.as_str()).unwrap();
+
+    for (prod, from) in map {
+        println!("Checking for B {b} in prod: {prod} gets created by: {from}");
+        if re_1.is_match(prod) {
+           println!("{prod} matches rule 1"); 
+        }else if re_2.is_match(prod) {
+           println!("{prod} matches rule 2"); 
+        } else {
+           println!("{prod} matches no rule"); 
+        }
+    }
+}
+fn inverted_production_map(
+    productions_map: &HashMap<String, Vec<String>>,
+) -> BTreeMap<String, String> {
+    let mut out: BTreeMap<String, String> = BTreeMap::new();
+    for (key, value) in productions_map {
+        for str_vec in value {
+            out.entry(str_vec.to_string()).or_insert(key.to_string());
+            println!("{str_vec} -> {key}");
+        }
+    }
+    out
 }
 fn first(
     not_term: &String,
@@ -55,26 +94,6 @@ fn first(
         }
     }
     output_map.get(not_term).unwrap().0.clone()
-}
-fn _print_terminal_and_not_terminals(
-    final_not_term: &BTreeSet<String>,
-    final_term: &BTreeSet<String>,
-) {
-    print!("Terminales: ");
-    for (i, item) in final_term.iter().enumerate() {
-        if i != 0 {
-            print!(", ");
-        }
-        print!("{item}");
-    }
-    print!("\nNo Terminales: ");
-    for (i, item) in final_not_term.iter().enumerate() {
-        if i != 0 {
-            print!(", ");
-        }
-        print!("{item}");
-    }
-    println!();
 }
 fn get_terminal_and_not_terminal() -> (
     BTreeSet<String>,
@@ -194,4 +213,49 @@ fn def_terminal_set() -> BTreeSet<String> {
     set.insert("not".to_string());
 
     set
+}
+fn _print_terminal_and_not_terminals(
+    final_not_term: &BTreeSet<String>,
+    final_term: &BTreeSet<String>,
+) {
+    print!("Terminales: ");
+    for (i, item) in final_term.iter().enumerate() {
+        if i != 0 {
+            print!(", ");
+        }
+        print!("{item}");
+    }
+    print!("\nNo Terminales: ");
+    for (i, item) in final_not_term.iter().enumerate() {
+        if i != 0 {
+            print!(", ");
+        }
+        print!("{item}");
+    }
+    println!();
+}
+fn print_first_and_follows(
+    first_and_follows: &HashMap<String, (HashSet<String>, HashSet<String>)>,
+) {
+    for (key, value) in first_and_follows {
+        print!("{} FIRST = {{", key);
+
+        for (i, item) in value.0.iter().enumerate() {
+            if i != 0 {
+                print!(", ");
+            }
+            print!("{item}");
+        }
+
+        print!("}}, FOLLOWS = {{");
+
+        for (i, item) in value.1.iter().enumerate() {
+            if i != 0 {
+                print!(", ");
+            }
+            print!("{item}");
+        }
+
+        println!("}}");
+    }
 }
