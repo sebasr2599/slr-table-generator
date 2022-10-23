@@ -1,5 +1,6 @@
 use regex::Regex;
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
+static EPSILON: &str = "#";
 fn main() {
     let (final_term, final_not_term, productions) = get_terminal_and_not_terminal();
     let mut first_and_follows: HashMap<String, (HashSet<String>, HashSet<String>)> = HashMap::new();
@@ -18,7 +19,9 @@ fn main() {
     // if its the first follow add $
     first_and_follows
         .entry(final_not_term.iter().next().unwrap().clone())
-        .and_modify(|tup| {_ = tup.1.insert("$".to_string())});
+        .and_modify(|tup|{
+            _ = tup.1.insert("$".to_string())
+        });
     let inverted_production_map: BTreeMap<String, String> = inverted_production_map(&productions);
 
     for b in &final_not_term {
@@ -35,9 +38,9 @@ fn main() {
 fn follow(
     b: &String,
     map: &BTreeMap<String, String>,
-    first_and_follows: &HashMap<String, (HashSet<String>, HashSet<String>)>,
+    first_and_follows: &mut HashMap<String, (HashSet<String>, HashSet<String>)>,
     final_not_term: &BTreeSet<String>,
-) -> () {
+) -> HashSet<String> {
     let formatted = format!(r"(.*) {} (.*)", b.to_string());
     let re_1 = Regex::new(formatted.as_str()).unwrap();
     let formatted = format!(r"(.*) {}", b.to_string());
@@ -46,13 +49,44 @@ fn follow(
     for (prod, from) in map {
         println!("Checking for B {b} in prod: {prod} gets created by: {from}");
         if re_1.is_match(prod) {
-           println!("{prod} matches rule 1"); 
-        }else if re_2.is_match(prod) {
-           println!("{prod} matches rule 2"); 
+            println!("{prod} matches rule 1");
+            //make into array
+            let beta = prod.split(' ').collect::<Vec<&str>>()[2].to_string();
+            //check if beta its not terminal
+            let mut check = false;
+            if final_not_term.contains(&beta) {
+               check = true; 
+            }
+            if check {
+                println!("{beta} is not terminal");
+                //get the frist of beta
+                // let beta_tup = first_and_follows.get_mut(&beta).unwrap();
+                // println!("first and follows of beta {:?}", beta_tup);
+                //check if the first of beta contains EPSILON
+                if first_and_follows.get(&beta).unwrap().0.contains(EPSILON) {
+                    println!("beta contains EPSILON");
+                    //add the first of beta except EPSILON in the follow of b
+                    // add the follow of the producer A to follow of b
+                } else {
+                    println!("beta does not contains EPSILON");
+                    //just add the first of beta to follow of b
+                    let aux = first_and_follows.get(&beta).unwrap().0.clone();
+                    first_and_follows
+                        .entry(b.to_string())
+                        .and_modify(|tup|{
+                            tup.1 = aux
+                        });
+                }
+            }
+        } else if re_2.is_match(prod) {
+            println!("{prod} matches rule 2");
+            // add the follow of the producer A to follow of b
         } else {
-           println!("{prod} matches no rule"); 
+            //remove
+            println!("{prod} matches no rule");
         }
     }
+    first_and_follows.get(b).unwrap().1.clone()
 }
 fn inverted_production_map(
     productions_map: &HashMap<String, Vec<String>>,
@@ -78,7 +112,9 @@ fn first(
         if terminals.contains(&front) {
             output_map
                 .entry(not_term.clone())
-                .and_modify(|(frst, _)| {_ = frst.insert(front.clone())})
+                .and_modify(|(frst, _)| {
+                    _ = frst.insert(front.clone())
+                })
                 .or_insert((HashSet::from([front.clone()]), HashSet::new()));
         } else {
             let t = first(
