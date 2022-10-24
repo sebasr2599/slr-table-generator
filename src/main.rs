@@ -22,7 +22,9 @@ fn main() {
     // if its the first follow add $
     first_and_follows
         .entry(final_not_term.iter().next().unwrap().clone())
-        .and_modify(|tup| _ = tup.1.insert("$".to_string()));
+        .and_modify(|tup|{ 
+            _ = tup.1.insert("$".to_string())
+        });
 
     // println!("\nPrinting map of productions");
     let inverted_production_map: IndexMap<String, String> = inverted_production_map(&productions);
@@ -109,7 +111,9 @@ fn follow(
             } else {
                 first_and_follows
                     .entry(b.to_string())
-                    .and_modify(|tup| _ = tup.1.insert(beta.to_string()));
+                    .and_modify(|tup|{
+                        _ = tup.1.insert(beta.to_string())
+                    });
             }
         } else if re_2.is_match(prod) {
             // println!("{prod} matches rule 2");
@@ -119,7 +123,7 @@ fn follow(
                 // if so, just append it
                 // println!("The follow of A {a} is not empty!");
                 let aux = first_and_follows.get(a).unwrap().1.clone(); //returns a set of the first of beta
-                                                                       // println!("appending the the follow of A {a}: to the follow of B{b} {:?}", aux);
+                // println!("appending the the follow of A {a}: to the follow of B{b} {:?}",aux);
                 first_and_follows.entry(b.to_string()).and_modify(|tup| {
                     tup.1.extend(aux);
                 });
@@ -159,19 +163,23 @@ fn first(
         if terminals.contains(&front) {
             output_map
                 .entry(not_term.clone())
-                .and_modify(|(frst, _)| _ = frst.insert(front.clone()))
+                .and_modify(|(frst, _)|{ _ = frst.insert(front.clone())
+                })
                 .or_insert((HashSet::from([front.clone()]), HashSet::new()));
         } else {
-            let t = first(
-                &front,
-                productions_map.get(&front).unwrap(),
-                &terminals,
-                output_map,
-                &productions_map,
-            );
-            output_map
-                .entry(not_term.clone())
-                .or_insert((t.clone(), HashSet::new()));
+            // println!("Checking for A {not_term} in production {production} front {front}");
+            if front != not_term.to_string() {
+                let t = first(
+                    &front,
+                    productions_map.get(&front).unwrap(),
+                    &terminals,
+                    output_map,
+                    &productions_map,
+                );
+                output_map
+                    .entry(not_term.clone())
+                    .or_insert((t.clone(), HashSet::new()));
+            }
         }
     }
     output_map.get(not_term).unwrap().0.clone()
