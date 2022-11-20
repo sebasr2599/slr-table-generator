@@ -1,5 +1,4 @@
-# Detectando first and follows
-
+# Generador de tablas SLR
 ## Descripción
 Projecto para la clase de diseño de compiladores
 ## Instalación

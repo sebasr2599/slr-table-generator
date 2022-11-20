@@ -1,2 +1,2 @@
-https://github.com/sebasr2599/first-and-follows
+https://github.com/sebasr2599/slr-table-generator
 En el README.md se encuentra como instalar el programa y como correr el proyecto

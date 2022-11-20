@@ -1,5 +1,5 @@
 [package]
-name = "first-and-follows"
+name = "slr-table-generator"
 version = "0.1.0"
 edition = "2021"
 
